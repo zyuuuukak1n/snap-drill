@@ -1,0 +1,20 @@
+services:
+  snap-drill:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: snap-drill
+    restart: unless-stopped
+    ports:
+      # Bind exclusively to localhost for reverse proxy security (Apache2 / Cloudflare)
+      - "127.0.0.1:3087:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

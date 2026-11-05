@@ -1,0 +1,37 @@
+{
+  "name": "スナップドリル (SnapDrill) - 小学生向けテスト復習・手書き学習Webアプリ",
+  "short_name": "スナップドリル",
+  "description": "採点済みプリントの写真を撮るだけでGeminiが自動で問題・模範解答を抽出！Chromebookで手書き反復練習ができる学習アプリ。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFDF7",
+  "theme_color": "#FF9800",
+  "orientation": "any",
+  "categories": ["education", "kids", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
