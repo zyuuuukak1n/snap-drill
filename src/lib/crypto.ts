@@ -17,3 +17,4 @@ export function verifyPassword(password: string, hash: string, salt: string): bo
     return false;
   }
 }
+

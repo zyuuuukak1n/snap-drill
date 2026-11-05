@@ -77,8 +77,8 @@ export async function extractTestFromImage(
 
   const genAI = new GoogleGenerativeAI(key);
 
-  // Model: gemini-1.5-flash or gemini-2.0-flash. Using gemini-1.5-flash as default stable vision model.
-  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  // Model: specified by user or environment variable (Default: gemini-3.8-flash)
+  const modelName = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
   const model = genAI.getGenerativeModel({
     model: modelName,
     systemInstruction: SYSTEM_PROMPT,

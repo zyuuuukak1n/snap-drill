@@ -8,3 +8,4 @@ export function getSessionUser(req: NextRequest): DbUser | null {
   if (!token) return null;
   return validateSession(token);
 }
+
