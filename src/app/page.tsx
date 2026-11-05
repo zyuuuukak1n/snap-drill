@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { SubjectBadge } from '@/components/SubjectBadge';
 import { HanamaruStamp } from '@/components/HanamaruStamp';
+import { QuestionListModal } from '@/components/QuestionListModal';
 import { fetchCurrentUser, fetchUserTestSets, deleteTestSetUnified, AuthUser } from '@/lib/api-client';
 import { calculateProgress, needsReview } from '@/lib/shuffle';
 import { Subject, SUBJECT_METAS, TestSet } from '@/types';
@@ -18,6 +19,7 @@ import {
   BookOpen,
   Award,
   LogIn,
+  ListOrdered,
 } from 'lucide-react';
 import { playPopSound } from '@/lib/audio';
 
@@ -28,6 +30,7 @@ export default function HomePage() {
   const [testSets, setTestSets] = useState<TestSet[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<SubjectFilter>('all');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [modalTestSet, setModalTestSet] = useState<TestSet | null>(null);
 
   useEffect(() => {
     fetchCurrentUser().then(async (user) => {
@@ -242,6 +245,19 @@ export default function HomePage() {
                     </button>
 
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playPopSound();
+                          setModalTestSet(test);
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-2 bg-white hover:bg-stone-50 text-stone-700 font-bold rounded-2xl border border-stone-300 text-xs shadow-sm transition-colors"
+                        title="問題一覧を確認"
+                      >
+                        <ListOrdered className="w-3.5 h-3.5 text-stone-500" />
+                        <span>もんだい一覧</span>
+                      </button>
+
                       <Link
                         href={`/test/${test.id}`}
                         onClick={() => playPopSound()}
@@ -271,6 +287,13 @@ export default function HomePage() {
         </span>
         <span className="text-base sm:text-lg">あたらしいプリントをよみこむ</span>
       </Link>
+
+      {/* Question List Modal */}
+      <QuestionListModal
+        testSet={modalTestSet}
+        isOpen={!!modalTestSet}
+        onClose={() => setModalTestSet(null)}
+      />
     </div>
   );
 }

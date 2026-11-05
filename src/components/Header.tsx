@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Home, PlusCircle, LogIn, LogOut, User } from 'lucide-react';
+import { Sparkles, Home, PlusCircle, LogIn, LogOut, User, BarChart2 } from 'lucide-react';
 import { fetchCurrentUser, AuthUser } from '@/lib/api-client';
 import { playPopSound } from '@/lib/audio';
 
@@ -66,9 +66,20 @@ export const Header: React.FC<HeaderProps> = ({ title, showBackHome = false }) =
         )}
 
         <div className="flex items-center gap-2">
+          {/* MyPage link */}
+          <Link
+            href="/mypage"
+            onClick={() => playPopSound()}
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-white/90 text-amber-950 border-2 border-amber-300 hover:bg-amber-50 rounded-xl text-xs font-black shadow-toy-sm"
+            title="マイページ・学習分析"
+          >
+            <BarChart2 className="w-3.5 h-3.5 text-amber-700" />
+            <span className="hidden sm:inline">マイページ</span>
+          </Link>
+
           {currentUser ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-stone-700 bg-white/80 px-2.5 py-1 rounded-full border border-amber-300 hidden sm:inline-flex items-center gap-1">
+              <span className="text-xs font-black text-stone-700 bg-white/80 px-2.5 py-1 rounded-full border border-amber-300 hidden md:inline-flex items-center gap-1">
                 <User className="w-3.5 h-3.5 text-amber-600" />
                 <span>{currentUser.name} さん</span>
               </span>
@@ -79,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBackHome = false }) =
                 title="ログアウト"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">ログアウト</span>
+                <span className="hidden md:inline">ログアウト</span>
               </button>
             </div>
           ) : (
@@ -99,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({ title, showBackHome = false }) =
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary-yellow hover:bg-amber-400 text-amber-950 font-black rounded-2xl border-2 border-b-4 border-amber-600 shadow-toy-sm active:translate-y-0.5 active:border-b-2 transition-all text-xs sm:text-sm"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>プリント読込</span>
+            <span className="hidden sm:inline">プリント読込</span>
           </Link>
         </div>
       </div>

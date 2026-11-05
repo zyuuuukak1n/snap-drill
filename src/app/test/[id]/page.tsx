@@ -413,9 +413,9 @@ export default function TestPracticePage({ params }: TestPageProps) {
           {/* Right Column (7 cols): Chromebook Handwriting Canvas */}
           <div className="lg:col-span-7 flex flex-col relative min-h-[380px] sm:min-h-[460px]">
             <DrawingCanvas
+              key={`canvas-${currentQ.id}-${currentIndex}`}
               ref={canvasRef}
               showCrossGuide={isJapanese}
-              initialImage={currentQ.userDrawing}
             />
 
             {/* Pop-up Hanamaru Stamp Animation on Correct */}

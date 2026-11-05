@@ -163,8 +163,13 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
       return () => window.removeEventListener('resize', handleResize);
     }, [handleResize]);
 
-    // Initial image load if provided
+    // Initial image load if provided (clears previous content first)
     useEffect(() => {
+      strokesRef.current = [];
+      currentStrokeRef.current = null;
+      setCanUndo(false);
+      redrawCanvas();
+
       if (initialImage) {
         const img = new Image();
         img.onload = () => {
@@ -176,7 +181,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
         };
         img.src = initialImage;
       }
-    }, [initialImage]);
+    }, [initialImage, redrawCanvas]);
 
     // Helper: get canvas-relative coordinates
     const getPointerPos = (e: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number } => {
