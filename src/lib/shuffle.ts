@@ -71,3 +71,4 @@ export function needsReview(testSet: TestSet): boolean {
   const progress = calculateProgress(testSet.questions);
   return progress.incorrect > 0 || (!progress.isAllCorrect && progress.isCompleted);
 }
+

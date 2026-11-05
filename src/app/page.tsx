@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { SubjectBadge } from '@/components/SubjectBadge';
 import { HanamaruStamp } from '@/components/HanamaruStamp';
-import { loadAllTestSets, deleteTestSet } from '@/lib/storage';
+import { fetchCurrentUser, fetchUserTestSets, deleteTestSetUnified, AuthUser } from '@/lib/api-client';
 import { calculateProgress, needsReview } from '@/lib/shuffle';
 import { Subject, SUBJECT_METAS, TestSet } from '@/types';
 import {
@@ -17,28 +17,33 @@ import {
   Sparkles,
   BookOpen,
   Award,
+  LogIn,
 } from 'lucide-react';
 import { playPopSound } from '@/lib/audio';
 
 type SubjectFilter = 'all' | Subject;
 
 export default function HomePage() {
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [testSets, setTestSets] = useState<TestSet[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<SubjectFilter>('all');
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const list = loadAllTestSets();
-    setTestSets(list);
-    setIsLoaded(true);
+    fetchCurrentUser().then(async (user) => {
+      setCurrentUser(user);
+      const list = await fetchUserTestSets(!!user);
+      setTestSets(list);
+      setIsLoaded(true);
+    });
   }, []);
 
-  const handleDelete = (e: React.MouseEvent, id: string, title: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string, title: string) => {
     e.preventDefault();
     e.stopPropagation();
     if (confirm(`「${title}」を削除してもよろしいですか？`)) {
       playPopSound();
-      deleteTestSet(id);
+      await deleteTestSetUnified(id, !!currentUser);
       setTestSets((prev) => prev.filter((t) => t.id !== id));
     }
   };
@@ -53,6 +58,25 @@ export default function HomePage() {
       <Header />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6 sm:py-8">
+        {/* Banner for login encouragement if not logged in */}
+        {!currentUser && isLoaded && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-100/90 border-2 border-amber-300 flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-700 shrink-0" />
+              <span className="text-xs sm:text-sm font-bold text-amber-950">
+                アカウントを作ってログインすると、テスト結果や手書き履歴がサーバーにずっと保存されます！
+              </span>
+            </div>
+            <Link
+              href="/login"
+              onClick={() => playPopSound()}
+              className="px-4 py-1.5 rounded-xl bg-primary-yellow hover:bg-amber-400 text-amber-950 text-xs font-black border-2 border-amber-600 shadow-toy-sm"
+            >
+              ログイン / 登録
+            </Link>
+          </div>
+        )}
+
         {/* Hero Banner for Chromebook Touch & Kids */}
         <div className="mb-8 p-5 sm:p-6 bg-gradient-to-r from-amber-100 via-orange-50 to-amber-200 rounded-3xl border-3 border-amber-300 shadow-toy relative overflow-hidden">
           <div className="relative z-10 max-w-xl">
@@ -133,6 +157,7 @@ export default function HomePage() {
             </p>
             <Link
               href="/create"
+              onClick={() => playPopSound()}
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary-yellow hover:bg-amber-400 text-amber-950 font-black rounded-2xl border-2 border-b-4 border-amber-600 shadow-toy active:translate-y-1 active:border-b-0 transition-all text-sm"
             >
               <Plus className="w-5 h-5" />

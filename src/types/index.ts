@@ -79,3 +79,4 @@ export const SUBJECT_METAS: Record<Subject, SubjectMeta> = {
     iconName: 'Languages',
   },
 };
+

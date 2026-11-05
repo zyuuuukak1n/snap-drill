@@ -54,3 +54,4 @@ export const SubjectBadge: React.FC<SubjectBadgeProps> = ({
     </span>
   );
 };
+

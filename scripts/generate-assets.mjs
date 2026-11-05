@@ -154,3 +154,4 @@ const ogp = createPng(1200, 630, (x, y) => {
 fs.writeFileSync(path.resolve('public/ogp.png'), ogp);
 
 console.log('Successfully generated public/icons/icon-192.png, icon-512.png, and public/ogp.png');
+

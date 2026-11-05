@@ -7,7 +7,12 @@ import confetti from 'canvas-confetti';
 import { Header } from '@/components/Header';
 import { SubjectBadge } from '@/components/SubjectBadge';
 import { HanamaruStamp } from '@/components/HanamaruStamp';
-import { getTestSetById, resetTestProgress } from '@/lib/storage';
+import {
+  fetchCurrentUser,
+  fetchTestSetById,
+  resetTestProgressUnified,
+  AuthUser,
+} from '@/lib/api-client';
 import { calculateProgress } from '@/lib/shuffle';
 import { playPopSound, playFanfareSound, playCorrectSound } from '@/lib/audio';
 import { TestSet, Question } from '@/types';
@@ -30,27 +35,31 @@ export default function ResultPage({ params }: ResultPageProps) {
   const resolvedParams = use(params);
   const testId = resolvedParams.id;
 
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [testSet, setTestSet] = useState<TestSet | null>(null);
 
   useEffect(() => {
-    const data = getTestSetById(testId);
-    if (!data) return;
-    setTestSet(data);
+    fetchCurrentUser().then(async (user) => {
+      setCurrentUser(user);
+      const data = await fetchTestSetById(testId, !!user);
+      if (!data) return;
+      setTestSet(data);
 
-    const progress = calculateProgress(data.questions);
-    if (progress.isAllCorrect) {
-      playFanfareSound();
-      try {
-        confetti({
-          particleCount: 100,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ['#FF5252', '#FFB020', '#4CAF50', '#2196F3', '#FF4081'],
-        });
-      } catch {}
-    } else {
-      playCorrectSound();
-    }
+      const progress = calculateProgress(data.questions);
+      if (progress.isAllCorrect) {
+        playFanfareSound();
+        try {
+          confetti({
+            particleCount: 100,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#FF5252', '#FFB020', '#4CAF50', '#2196F3', '#FF4081'],
+          });
+        } catch {}
+      } else {
+        playCorrectSound();
+      }
+    });
   }, [testId]);
 
   if (!testSet) {
@@ -70,9 +79,9 @@ export default function ResultPage({ params }: ResultPageProps) {
   const progress = calculateProgress(testSet.questions);
   const incorrectQuestions = testSet.questions.filter((q) => q.status === 'incorrect');
 
-  const handleRestartAll = () => {
+  const handleRestartAll = async () => {
     playPopSound();
-    resetTestProgress(testId);
+    await resetTestProgressUnified(testId, !!currentUser);
     router.push(`/test/${testId}`);
   };
 
@@ -223,3 +232,4 @@ export default function ResultPage({ params }: ResultPageProps) {
     </div>
   );
 }
+

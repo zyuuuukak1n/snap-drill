@@ -96,3 +96,4 @@ docker compose logs -f
 ## 📄 ライセンス
 
 [MIT License](LICENSE) © 2026 じゅーかきん
+

@@ -29,6 +29,12 @@ yarn-error.log*
 .env.production
 .env.test
 
+# SQLite Database / Local Data
+/data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
 # Server / Local Operation Secrets & Logs (Antigravity Rule)
 DEPLOYMENT_GUIDE_LOCAL.md
 SESSION_HISTORY.md
@@ -39,3 +45,4 @@ SESSION_HISTORY.md
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+

@@ -412,3 +412,4 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
 );
 
 DrawingCanvas.displayName = 'DrawingCanvas';
+

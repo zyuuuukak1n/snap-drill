@@ -1,15 +1,15 @@
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 
-# Install dependencies needed for node-gyp or alpine if necessary
+# Install dependencies needed for libc
 RUN apk add --no-cache libc6-compat
 
 COPY package.json package-lock.json* ./
 RUN npm ci --ignore-scripts
 
 # Stage 2: Builder
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -21,16 +21,20 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # Stage 3: Runner
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV DATA_DIR="/app/data"
 
 # Install curl for healthcheck
 RUN apk add --no-cache curl
+
+# Create data directory for SQLite and ensure ownership by node user
+RUN mkdir -p /app/data && chown -R node:node /app/data
 
 # Run as non-root user for defensive security
 USER node

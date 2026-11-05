@@ -149,3 +149,4 @@ export function playFanfareSound(): void {
     console.debug('Audio play failed:', err);
   }
 }
+

@@ -8,7 +8,12 @@ import { Header } from '@/components/Header';
 import { SubjectBadge } from '@/components/SubjectBadge';
 import { DrawingCanvas, DrawingCanvasHandle } from '@/components/DrawingCanvas';
 import { HanamaruStamp } from '@/components/HanamaruStamp';
-import { getTestSetById, updateQuestionResult } from '@/lib/storage';
+import {
+  fetchCurrentUser,
+  fetchTestSetById,
+  updateTestSetUnified,
+  AuthUser,
+} from '@/lib/api-client';
 import { shuffleArray, extractReviewQuestions } from '@/lib/shuffle';
 import { playPopSound, playCorrectSound, playRetrySound } from '@/lib/audio';
 import { TestSet, Question } from '@/types';
@@ -33,6 +38,7 @@ export default function TestPracticePage({ params }: TestPageProps) {
   const resolvedParams = use(params);
   const testId = resolvedParams.id;
 
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [testSet, setTestSet] = useState<TestSet | null>(null);
   const [activeQuestions, setActiveQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -47,13 +53,16 @@ export default function TestPracticePage({ params }: TestPageProps) {
 
   // Load test data
   useEffect(() => {
-    const data = getTestSetById(testId);
-    if (!data) return;
+    fetchCurrentUser().then(async (user) => {
+      setCurrentUser(user);
+      const data = await fetchTestSetById(testId, !!user);
+      if (!data) return;
 
-    setTestSet(data);
-    setActiveQuestions(data.questions);
-    setCurrentIndex(0);
-    setShowAnswer(false);
+      setTestSet(data);
+      setActiveQuestions(data.questions);
+      setCurrentIndex(0);
+      setShowAnswer(false);
+    });
   }, [testId]);
 
   // Handle toggles change (shuffle / review only)
@@ -98,6 +107,29 @@ export default function TestPracticePage({ params }: TestPageProps) {
   // Current active question
   const currentQ: Question | undefined = activeQuestions[currentIndex];
 
+  // Defensive sanitization: Prevent answer spoiler in question prompt (e.g. "【送】る" -> "【＿＿】る")
+  const getDisplayPrompt = (prompt: string, answer: string, isAnswerRevealed: boolean) => {
+    if (isAnswerRevealed || !answer) return prompt;
+    const trimmedAns = answer.trim();
+    if (!trimmedAns) return prompt;
+
+    let sanitized = prompt;
+    // Replace 【answer】 or [answer] or (answer) with blanks
+    if (sanitized.includes(`【${trimmedAns}】`)) {
+      sanitized = sanitized.replaceAll(`【${trimmedAns}】`, '【＿＿】');
+    }
+    if (sanitized.includes(`[${trimmedAns}]`)) {
+      sanitized = sanitized.replaceAll(`[${trimmedAns}]`, '[＿＿]');
+    }
+    if (sanitized.includes(`(${trimmedAns})`)) {
+      sanitized = sanitized.replaceAll(`(${trimmedAns})`, '(＿＿)');
+    }
+    if (sanitized.includes(`（${trimmedAns}）`)) {
+      sanitized = sanitized.replaceAll(`（${trimmedAns}）`, '（＿＿）');
+    }
+    return sanitized;
+  };
+
   // Fire confetti
   const fireConfetti = () => {
     try {
@@ -112,16 +144,40 @@ export default function TestPracticePage({ params }: TestPageProps) {
     }
   };
 
+  // Save question answer status
+  const saveAnswer = async (status: 'correct' | 'incorrect') => {
+    if (!currentQ || !testSet) return;
+
+    const drawingData = canvasRef.current?.getImageDataUrl() || undefined;
+    const updatedQuestions = testSet.questions.map((q) => {
+      if (q.id === currentQ.id) {
+        return {
+          ...q,
+          status,
+          userDrawing: drawingData !== undefined ? drawingData : q.userDrawing,
+        };
+      }
+      return q;
+    });
+
+    const updatedTestSet: TestSet = {
+      ...testSet,
+      questions: updatedQuestions,
+    };
+
+    setTestSet(updatedTestSet);
+    await updateTestSetUnified(updatedTestSet, !!currentUser);
+  };
+
   // Handle user self-grading: Correct ("できた！")
-  const handleMarkCorrect = () => {
+  const handleMarkCorrect = async () => {
     if (!currentQ || !testSet) return;
 
     playCorrectSound();
     fireConfetti();
     setShowHanamaru(true);
 
-    const drawingData = canvasRef.current?.getImageDataUrl() || undefined;
-    updateQuestionResult(testSet.id, currentQ.id, 'correct', drawingData);
+    await saveAnswer('correct');
 
     // Short pause to show hanamaru animation before advancing
     setTimeout(() => {
@@ -131,13 +187,11 @@ export default function TestPracticePage({ params }: TestPageProps) {
   };
 
   // Handle user self-grading: Incorrect ("もう１かい")
-  const handleMarkIncorrect = () => {
+  const handleMarkIncorrect = async () => {
     if (!currentQ || !testSet) return;
 
     playRetrySound();
-    const drawingData = canvasRef.current?.getImageDataUrl() || undefined;
-    updateQuestionResult(testSet.id, currentQ.id, 'incorrect', drawingData);
-
+    await saveAnswer('incorrect');
     advanceNextQuestion();
   };
 
@@ -281,7 +335,7 @@ export default function TestPracticePage({ params }: TestPageProps) {
                 {/* Prompt Text */}
                 <div className="my-4">
                   <h2 className="text-xl sm:text-2xl font-black text-stone-900 leading-relaxed">
-                    {currentQ.prompt}
+                    {getDisplayPrompt(currentQ.prompt, currentQ.answer, showAnswer)}
                   </h2>
                   {currentQ.subPrompt && (
                     <p className="mt-2 text-sm sm:text-base font-bold text-amber-800 bg-amber-50/80 p-3 rounded-2xl border border-amber-200">
@@ -376,3 +430,4 @@ export default function TestPracticePage({ params }: TestPageProps) {
     </div>
   );
 }
+

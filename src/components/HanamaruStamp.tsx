@@ -71,3 +71,4 @@ export const HanamaruStamp: React.FC<HanamaruStampProps> = ({
     </div>
   );
 };
+

@@ -1,9 +1,11 @@
 import { TestSet, Question, Subject } from '@/types';
 
 const STORAGE_KEY = 'snap_drill_test_sets_v1';
+const INITIALIZED_KEY = 'snap_drill_initialized_flag_v1';
 
 /**
  * Initial sample tests so kids/parents can play right away even without uploading!
+ * NOTE: Prompts NEVER expose the answer directly (e.g. Katakana for Kanji writing).
  */
 export const INITIAL_SAMPLE_TESTS: TestSet[] = [
   {
@@ -15,8 +17,8 @@ export const INITIAL_SAMPLE_TESTS: TestSet[] = [
       {
         id: 'q1-1',
         number: 1,
-        prompt: '【広】い公園で遊ぶ。',
-        subPrompt: 'カタカナを漢字になおそう（ひろい）',
+        prompt: '【ヒロ】い公園で遊ぶ。',
+        subPrompt: 'カタカナを漢字になおそう',
         answer: '広',
         explanation: 'まだれ（广）の中に「ム」を書くよ。マス目の中心を意識しよう！',
         status: 'unanswered',
@@ -24,17 +26,17 @@ export const INITIAL_SAMPLE_TESTS: TestSet[] = [
       {
         id: 'q1-2',
         number: 2,
-        prompt: '手紙を【送】る。',
-        subPrompt: 'カタカナを漢字になおそう（おくる）',
+        prompt: '手紙を【オク】る。',
+        subPrompt: 'カタカナを漢字になおそう',
         answer: '送',
-        explanation: 'しんにょうの点と払いをていねいに。',
+        explanation: 'しんにょうの点と払いをていねいに書こう。',
         status: 'unanswered',
       },
       {
         id: 'q1-3',
         number: 3,
-        prompt: '太陽の【光】があたる。',
-        subPrompt: 'カタカナを漢字になおそう（ひかり）',
+        prompt: '太陽の【ヒカリ】があたる。',
+        subPrompt: 'カタカナを漢字になおそう',
         answer: '光',
         explanation: '上の点３つのバランスと、下の曲がりハネがポイント！',
         status: 'unanswered',
@@ -50,7 +52,7 @@ export const INITIAL_SAMPLE_TESTS: TestSet[] = [
       {
         id: 'q2-1',
         number: 1,
-        prompt: '２４ × ３ ＝ ？',
+        prompt: '２４ × ３ ＝ 【 ？ 】',
         subPrompt: 'ひっ算で計算してみよう',
         answer: '72',
         explanation: '一の位: 4×3=12（1くり上がり）、十の位: 2×3=6 + 1 = 7。答えは 72 だよ！',
@@ -59,7 +61,7 @@ export const INITIAL_SAMPLE_TESTS: TestSet[] = [
       {
         id: 'q2-2',
         number: 2,
-        prompt: '３５ × ４ ＝ ？',
+        prompt: '３５ × ４ ＝ 【 ？ 】',
         subPrompt: 'くり上がりに気をつけてね',
         answer: '140',
         explanation: '5×4=20（2くりあがり）、3×4=12+2=14。答えは 140！',
@@ -87,7 +89,8 @@ export const INITIAL_SAMPLE_TESTS: TestSet[] = [
 ];
 
 /**
- * Loads all test sets from LocalStorage with fallback to initial sample data
+ * Loads all test sets from LocalStorage.
+ * Handles deletion properly: if user deleted everything, it stays empty and does NOT resurrect!
  */
 export function loadAllTestSets(): TestSet[] {
   if (typeof window === 'undefined') {
@@ -95,20 +98,25 @@ export function loadAllTestSets(): TestSet[] {
   }
 
   try {
+    const isInitialized = localStorage.getItem(INITIALIZED_KEY);
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
+
+    if (!isInitialized || raw === null) {
+      // First time visitor: seed sample tests and mark initialized
       localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SAMPLE_TESTS));
+      localStorage.setItem(INITIALIZED_KEY, 'true');
       return INITIAL_SAMPLE_TESTS;
     }
-    const parsed = JSON.parse(raw) as TestSet[];
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SAMPLE_TESTS));
-      return INITIAL_SAMPLE_TESTS;
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
     }
-    return parsed;
+
+    return parsed as TestSet[];
   } catch (err) {
     console.error('Failed to load test sets from LocalStorage:', err);
-    return INITIAL_SAMPLE_TESTS;
+    return [];
   }
 }
 
@@ -139,6 +147,7 @@ export function saveTestSet(testSet: TestSet): void {
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(INITIALIZED_KEY, 'true');
   } catch (err) {
     console.error('Failed to save test set:', err);
   }
@@ -199,7 +208,7 @@ export function resetTestProgress(testSetId: string): TestSet | null {
 }
 
 /**
- * Deletes a test set by ID
+ * Deletes a test set by ID and ensures deleted state persists
  */
 export function deleteTestSet(id: string): void {
   if (typeof window === 'undefined') return;
@@ -208,6 +217,7 @@ export function deleteTestSet(id: string): void {
   const updated = current.filter((t) => t.id !== id);
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(INITIALIZED_KEY, 'true');
   } catch (err) {
     console.error('Failed to delete test set:', err);
   }

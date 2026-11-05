@@ -20,7 +20,14 @@ git clone https://github.com/zyuuuukak1n/snap-drill.git
 cd snap-drill
 ```
 
-### 2. 環境変数の設定
+### 2. データ永続化ディレクトリの作成
+SQLiteデータベースの保存先を作成し、権限を付与します。
+```bash
+mkdir -p data
+chmod 777 data
+```
+
+### 3. 環境変数の設定
 `.env.example` をコピーして `.env` を作成します。
 ```bash
 cp .env.example .env
@@ -31,9 +38,10 @@ cp .env.example .env
 GEMINI_API_KEY=your_gemini_api_key_here
 NEXT_PUBLIC_APP_URL=https://your-domain.com
 NODE_ENV=production
+DATA_DIR=/app/data
 ```
 
-### 3. Docker Compose でビルド & 起動
+### 4. Docker Compose でビルド & 起動
 ```bash
 docker compose up -d --build
 ```
@@ -48,8 +56,6 @@ docker compose logs -f
 ---
 
 ## 🌐 Nginx リバースプロキシ設定例（SSL対応）
-
-ドメインへのアクセスをローカルの Docker コンテナ（ポート 3087）へ転送します。
 
 ```nginx
 server {
@@ -82,7 +88,8 @@ server {
 
 ---
 
-## 📱 PWA（Progressive Web App）としての利用
+## 👤 ユーザー認証 & データ管理
 
-- **Chromebook / PC (Chrome)**: アドレスバー右端の「インストール」アイコンをクリックすると、独立したデスクトップアプリとして利用可能。
-- **iPad / タブレット (Safari / Chrome)**: 「ホーム画面に追加」を行うことで、全画面モードでスタイラスペン学習が可能になります。
+- 画面右上の「ログイン」から「新しくアカウントを作る」を選択することで、メールアドレスとパスワードによるアカウントを作成できます。
+- アカウントを作成すると、テストデータや手書き回答履歴がサーバーのSQLiteデータベースにユーザー単位で永続化されます。
+- テストセットを削除した場合、サーバーから完全に削除されるため、ブラウザをリロードしても再出現することはありません。

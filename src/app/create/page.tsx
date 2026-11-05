@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
-import { saveTestSet } from '@/lib/storage';
+import { saveTestSetUnified, fetchCurrentUser } from '@/lib/api-client';
 import { playPopSound, playCorrectSound } from '@/lib/audio';
 import { TestSet, Subject, SUBJECT_METAS } from '@/types';
 import {
@@ -94,7 +94,8 @@ export default function CreateTestPage() {
         newTest.sourceImageUrl = previewUrl;
       }
 
-      saveTestSet(newTest);
+      const user = await fetchCurrentUser();
+      await saveTestSetUnified(newTest, !!user);
 
       // Redirect to practice screen
       setTimeout(() => {
@@ -261,3 +262,4 @@ export default function CreateTestPage() {
     </div>
   );
 }
+
